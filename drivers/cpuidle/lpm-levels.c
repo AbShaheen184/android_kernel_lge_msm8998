@@ -427,8 +427,22 @@ static void clusttimer_cancel(void)
 	int cpu = raw_smp_processor_id();
 	struct lpm_cluster *cluster = per_cpu(cpu_cluster, cpu);
 
-	hrtimer_try_to_cancel(&cluster->histtimer);
-	hrtimer_try_to_cancel(&cluster->parent->histtimer);
+	ktime_t time_rem;
+
+	time_rem = hrtimer_get_remaining(&cluster->histtimer);
+	if (ktime_to_us(time_rem) > 0)
+		hrtimer_try_to_cancel(&cluster->histtimer);
+
+	if (cluster->parent) {
+		time_rem = hrtimer_get_remaining(
+			&cluster->parent->histtimer);
+
+		if (ktime_to_us(time_rem) <= 0)
+			return;
+
+		hrtimer_try_to_cancel(&cluster->parent->histtimer);
+	}
+
 }
 
 static enum hrtimer_restart clusttimer_fn(struct hrtimer *h)
