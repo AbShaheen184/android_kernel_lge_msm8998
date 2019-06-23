@@ -35,6 +35,9 @@ module_param(input_boost_duration, short, 0644);
 #define MAX_BOOST		BIT(3)
 #define GPU_BOOST		BIT(4)
 
+
+
+
 struct boost_drv {
 	struct workqueue_struct *wq;
 	struct work_struct input_boost;
@@ -48,6 +51,8 @@ struct boost_drv {
 	atomic64_t max_boost_expires;
 	atomic_t max_boost_dur;
 	atomic_t state;
+	spinlock_t lock;
+
 };
 
 static struct boost_drv *boost_drv_g;
